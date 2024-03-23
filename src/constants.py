@@ -7,3 +7,7 @@ TANACH_BOOKS = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Jos
 FORMAT = 'utf-8'
 
 DATA_DIR = 'data'
+
+COLS = ["Pasuk", "Mefaresh", "Perush"]
+
+COMBINED = 'combined.csv'

@@ -1,9 +1,12 @@
 # text utils: https://github.com/TechnionTDK/jbs-data/blob/master/raw2json/text_utils.py
 from typing import List
+import multiprocessing
 import unicodedata
 import requests
+import psutil
 import json
 import re
+import os
 
 from constants import FORMAT
 
@@ -73,7 +76,9 @@ def get_commentaries(book: str, chapter: int, pasuk: int) -> list:
     # extract the "heTitle" and "he" fields from each of these objects.
     # return a list of tuples (heTitle, he)
     url = f"https://www.sefaria.org/api/links/{book}.{chapter}.{pasuk}"
-    print(url)
+    process_id = os.getpid()
+    cpu_affinity = psutil.Process(process_id).cpu_affinity()
+    print(f"CPU={cpu_affinity}: URL={url}")
     response = requests.get(url)
     json_data = json.loads(response.text)
     commentaries = []

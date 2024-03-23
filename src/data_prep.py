@@ -1,7 +1,9 @@
 import csv
 import os
 from sefaria_api import get_tanakh_books, get_num_of_chapters, get_psukim, get_commentaries, clean_text
-from constants import DATA_DIR, FORMAT
+from multiprocessing import Process, current_process
+from constants import DATA_DIR, FORMAT, COLS, COMBINED
+import pandas as pd
 
 def get_book_title_csv(book: str) -> str:
     """
@@ -60,7 +62,9 @@ def create_book_csv(book: str) -> None:
     Returns:
         None
     """
-    columns = ["Pasuk", "Mefaresh", "Perush"]
+    columns = COLS
+    if os.path.exists(get_book_title_csv(book)):
+        return
     with open(get_book_title_csv(book), 'w', newline='', encoding=FORMAT) as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(columns)
@@ -98,8 +102,103 @@ def create_book_txt(book: str):
     csvfile.close()
 
 
-if __name__ == "__main__":
-    books = get_tanakh_books()
-    for book in books[:1]:
+
+def create_csv_for_each_book(books: list) -> None:
+    """
+    Create a CSV file for each book in the list.
+
+    Args:
+        books (list): List of books to create CSV files for.
+
+    Returns:
+        None
+    """
+    for book in books:
         create_book_csv(book)
-        #create_book_txt(book)
+
+
+def create_all_books_csv() -> None:
+    """
+    Create text files for all books.
+
+    Returns:
+        None
+    """
+    # return if the combined file already exists
+    if os.path.exists(COMBINED):
+        return
+        
+    books = get_tanakh_books()
+    cpu_count = os.cpu_count() - 1
+    print(f"Get CSVs using {cpu_count} Processes")
+    procs = []
+    books_per_core = len(books) // cpu_count
+    for i in range(cpu_count):
+        start = i * books_per_core
+        end = start + books_per_core
+        if i == cpu_count - 1:
+            end = len(books)
+        books_subset = books[start:end]
+        p = Process(target=create_csv_for_each_book, args=(books_subset,))
+        procs.append(p)
+        p.start()
+    
+    for p in procs:
+        p.join()
+    
+    # combine the CSV files into one combined csv file
+    with open(COMBINED, 'w', newline='', encoding=FORMAT) as combined_csv:
+        writer = csv.writer(combined_csv)
+        writer.writerow(COLS)
+        for book in books:
+            with open(get_book_title_csv(book), 'r', newline='', encoding=FORMAT) as csvfile:
+                reader = csv.reader(csvfile)
+                next(reader)  # skip the header
+                for row in reader:
+                    writer.writerow(row)
+
+
+def get_raw_data() -> None:
+    """
+    Get the raw data for all the books.
+
+    Returns:
+        None
+    """
+    raw_data = pd.read_csv(COMBINED)
+    return raw_data
+
+def prepare_data(raw_data: pd.DataFrame) -> pd.DataFrame:
+    # remove the "Mefaresh" column
+    raw_data.drop(columns=["Mefaresh"], inplace=True)
+    # remove rows with empty values
+    raw_data.dropna(inplace=True)
+    # renaming the columns for mT5
+    raw_data.columns = ['input_text', 'target_text']
+
+    # add "summarize: " to the target_text
+    return raw_data
+
+
+def get_raw_data() -> None:
+    """
+    Get the raw data for all the books.
+
+    Returns:
+        None
+    """
+    raw_data = pd.read_csv(COMBINED)
+    return raw_data
+
+def prepare_data(raw_data: pd.DataFrame) -> pd.DataFrame:
+    # remove the "Mefaresh" column
+    raw_data.drop(columns=["Mefaresh"], inplace=True)
+    # remove rows with empty values
+    raw_data.dropna(inplace=True)
+    # renaming the columns for mT5
+    raw_data.columns = ['input_text', 'target_text']
+    return raw_data
+
+create_all_books_csv()
+df = get_raw_data()
+df = prepare_data(df)
