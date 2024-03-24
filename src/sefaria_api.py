@@ -3,7 +3,6 @@ from typing import List
 import multiprocessing
 import unicodedata
 import requests
-import psutil
 import json
 import re
 import os
@@ -77,8 +76,7 @@ def get_commentaries(book: str, chapter: int, pasuk: int) -> list:
     # return a list of tuples (heTitle, he)
     url = f"https://www.sefaria.org/api/links/{book}.{chapter}.{pasuk}"
     process_id = os.getpid()
-    cpu_affinity = psutil.Process(process_id).cpu_affinity()
-    print(f"CPU={cpu_affinity}: URL={url}")
+    print(f"PID={process_id}: URL={url}")
     response = requests.get(url)
     json_data = json.loads(response.text)
     commentaries = []

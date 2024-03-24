@@ -180,14 +180,14 @@ def prepare_data(raw_data: pd.DataFrame) -> pd.DataFrame:
     return raw_data
 
 
-def get_raw_data() -> None:
+def get_raw_data(path) -> None:
     """
     Get the raw data for all the books.
 
     Returns:
         None
     """
-    raw_data = pd.read_csv(COMBINED)
+    raw_data = pd.read_csv(path)
     return raw_data
 
 def prepare_data(raw_data: pd.DataFrame) -> pd.DataFrame:
@@ -199,6 +199,8 @@ def prepare_data(raw_data: pd.DataFrame) -> pd.DataFrame:
     raw_data.columns = ['input_text', 'target_text']
     return raw_data
 
-create_all_books_csv()
-df = get_raw_data()
-df = prepare_data(df)
+
+if __name__ == '__main__': 
+    create_all_books_csv()
+    df = get_raw_data()
+    df = prepare_data(df)
