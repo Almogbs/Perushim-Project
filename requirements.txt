@@ -1,5 +1,11 @@
 numpy
 pandas
-#tensorflow
-#keras
 requests
+accelerate
+transformers 
+datasets
+sacrebleu
+evaluate
+torch
+torchvision
+sentencepiece
