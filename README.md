@@ -27,6 +27,7 @@ You can install these packages using pip:
 
 ```bash
 pip install -r requirements.txt
+```
 
 ## How to Use
 
